@@ -5,6 +5,8 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.DefaultConnectionKeepAliveStrategy;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.BufferingClientHttpRequestFactory;
@@ -14,6 +16,21 @@ import org.springframework.web.client.RestTemplate;
 
 @Configuration
 public class RestConfig {
+
+    private final Integer maxTotal;
+    private final Integer defaultMaxPerRoute;
+    private final Integer connectionRequestTimeout;
+    private final Integer socketTimeout;
+
+    public RestConfig(@Value("${rest-config.max-total}") Integer maxTotal,
+                      @Value("${rest-config.default-max-per-route}") Integer defaultMaxPerRoute,
+                      @Value("${rest-config.connection-request-timeout}") Integer connectionRequestTimeout,
+                      @Value("${rest-config.socket-timeout}") Integer socketTimeout) {
+        this.maxTotal = maxTotal;
+        this.defaultMaxPerRoute = defaultMaxPerRoute;
+        this.connectionRequestTimeout = connectionRequestTimeout;
+        this.socketTimeout = socketTimeout;
+    }
 
     @Bean
     public RestTemplate getRestClient() {
@@ -25,13 +42,13 @@ public class RestConfig {
     @Bean
     public ClientHttpRequestFactory clientHttpRequestFactory(){
         PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();
-        connectionManager.setMaxTotal(150);
-        connectionManager.setDefaultMaxPerRoute(20);
+        connectionManager.setMaxTotal(maxTotal);
+        connectionManager.setDefaultMaxPerRoute(defaultMaxPerRoute);
 
         RequestConfig requestConfig = RequestConfig
                 .custom()
-                .setConnectionRequestTimeout(3000)
-                .setSocketTimeout(3000)
+                .setConnectionRequestTimeout(connectionRequestTimeout)
+                .setSocketTimeout(socketTimeout)
                 .build();
 
         CloseableHttpClient httpClient = HttpClients
